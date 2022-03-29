@@ -1,13 +1,9 @@
-import subprocess
-from importlib_metadata import metadata
-import moviepy.editor
 import glob
 import subprocess
 import os
 import json
 
 do_metadata = True
-do_compression = False
 do_threading = False
 
 
@@ -53,23 +49,3 @@ for channel in channels:
                 #add json lines
                 json.dump(vid_data, outfile)
                 outfile.write('\n')
-                
-
-        if do_compression:
-          subprocess.run('ffmpeg -i "' + vid + '" -vcodec libx265 -crf 40 "' + vid + suffix + '"')
-        
-        # clip = moviepy.editor.VideoFileClip(vid)
-        # audioclip = moviepy.editor.AudioFileClip(vid)
-        # videoclip = clip.set_audio(audioclip)
-        # processed_vids.append(videoclip)
-
-    #if do_metadata:
-    #    f.write(','.join(keys)+'\n')
-    #    for line in metadata:
-    #        f.write(line)
-    
-    #f.close()
-    
-    #final = moviepy.editor.concatenate_videoclips(processed_vids)
-    #final.write_videofile(channel+"All.mp4")
-    #final.ipython_display()
