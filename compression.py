@@ -1,27 +1,13 @@
 import glob
+import shutil
 import subprocess
 import os
 from concurrent.futures import ThreadPoolExecutor
 
-do_replace = False
-
-#added to compressed videofiles
-suffix = '-d.mp4'
-
-ffmpeg_args = '-vcodec libx264 -preset veryfast -crf 40'
-
-# def compress(filepath):
-# 	if do_replace:
-# 		subprocess.run('ffmpeg -i "' + filepath + '" -vcodec libx265 -crf '+\
-# 			str(compression_level) + ' "' + filepath + '"')
-# 	else:
-# 		subprocess.run('ffmpeg -i "' + filepath + '" -vcodec libx265 -crf '+\
-# 			str(compression_level) + ' "' + filepath[:-4] + suffix + '"')
-# 	print(filepath)
-
 def compress(filepath):
-	process = 'ffmpeg -i "' + filepath + '" ' + ffmpeg_args + ' "' + filepath[:-4] + suffix + '"'
-	subprocess.run(process)
+	subprocess.run(['ffmpeg', '-i', filepath, '-vcodec', 'libx264', '-preset', 'veryfast', '-crf', '40', filepath+'cpr.mp4'], text=True, input="y")
+	shutil.move(filepath+'cpr.mp4', filepath)
+	os.remove(filepath+'cpr.mp4')
 
 channels = glob.glob('Channels/*')
 for channel in channels:
