@@ -4,8 +4,10 @@ import subprocess
 import os
 from concurrent.futures import ThreadPoolExecutor
 
+crf = 34
+
 def compress(filepath):
-	subprocess.run(['ffmpeg', '-i', filepath, '-vcodec', 'libx264', '-preset', 'veryfast', '-crf', '40', filepath+'cpr.mp4'], text=True, input="y")
+	subprocess.run(['ffmpeg', '-i', filepath, '-vcodec', 'libx264', '-preset', 'veryfast', '-crf', str(crf), filepath+'cpr.mp4'], text=True, input="y")
 	shutil.move(filepath+'cpr.mp4', filepath)
 	os.remove(filepath+'cpr.mp4')
 
