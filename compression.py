@@ -1,43 +1,34 @@
-import subprocess
-from importlib_metadata import metadata
-import moviepy.editor
 import glob
 import subprocess
 import os
+from concurrent.futures import ThreadPoolExecutor
 
-do_compression = False
-do_threading = False
-
+do_replace = False
 
 #added to compressed videofiles
 suffix = '-d.mp4'
 
+ffmpeg_args = '-vcodec libx264 -preset veryfast -crf 40'
+
+# def compress(filepath):
+# 	if do_replace:
+# 		subprocess.run('ffmpeg -i "' + filepath + '" -vcodec libx265 -crf '+\
+# 			str(compression_level) + ' "' + filepath + '"')
+# 	else:
+# 		subprocess.run('ffmpeg -i "' + filepath + '" -vcodec libx265 -crf '+\
+# 			str(compression_level) + ' "' + filepath[:-4] + suffix + '"')
+# 	print(filepath)
+
+def compress(filepath):
+	process = 'ffmpeg -i "' + filepath + '" ' + ffmpeg_args + ' "' + filepath[:-4] + suffix + '"'
+	subprocess.run(process)
+
 channels = glob.glob('Channels/*')
 for channel in channels:
-    #iterates all videos in all channels
-    vids = glob.glob(channel+'/*.mp4')
-    #sort by date
-    vids.sort(key=os.path.getmtime)
+	#iterates all videos in all channels
+	vids = glob.glob(channel+'/*.mp4')
+	#sort by date
+	vids.sort(key=os.path.getmtime)
 
-    processed_vids = []
-    for vid in vids:
-        print(vid)       
-
-        if do_compression:
-          subprocess.run('ffmpeg -i "' + vid + '" -vcodec libx265 -crf 40 "' + vid + suffix + '"')
-        
-        # clip = moviepy.editor.VideoFileClip(vid)
-        # audioclip = moviepy.editor.AudioFileClip(vid)
-        # videoclip = clip.set_audio(audioclip)
-        # processed_vids.append(videoclip)
-
-    #if do_metadata:
-    #    f.write(','.join(keys)+'\n')
-    #    for line in metadata:
-    #        f.write(line)
-    
-    #f.close()
-    
-    #final = moviepy.editor.concatenate_videoclips(processed_vids)
-    #final.write_videofile(channel+"All.mp4")
-    #final.ipython_display()
+	with ThreadPoolExecutor(max_workers=1) as exe:
+		exe.map(compress,vids)
