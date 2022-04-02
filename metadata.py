@@ -8,10 +8,10 @@ exe = 'C:\\Users\Ferdi\\Desktop\\exiftool\\exiftool'
 
 #strip the file to write metadata
 f = open("big.json", "w")
-f.write('')
+f.write('[')
 f.close()
 f = open("small.json", "w")
-f.write('')
+f.write('[')
 f.close()
 
 channels = glob.glob('Channels/*')
@@ -21,7 +21,7 @@ for channel in channels:
     #sort by date
     vids.sort(key=os.path.getmtime)
 
-    for vid in vids:
+    for idx, vid in enumerate(vids):
         #getting the metadata for a video
         process = subprocess.Popen([exe, vid],stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
         keys = []
@@ -36,7 +36,9 @@ for channel in channels:
         with open("big.json", "a") as outfile:
             #add json lines
             json.dump(vid_data, outfile)
-            outfile.write('\n')
+            #write for every file except last
+            if idx != len(vids) - 1:
+                outfile.write(',\n')
 
         #for small format
         small_format = {k:vid_data[k] for k in ('File Name','File Size','Duration') if k in vid_data}
@@ -44,4 +46,13 @@ for channel in channels:
         with open("small.json", "a") as outfile:
             #add json lines
             json.dump(small_format, outfile)
-            outfile.write('\n')
+            #write for every file except last
+            if idx != len(vids) - 1:
+                outfile.write(',\n')
+
+f = open("big.json", "a")
+f.write(']')
+f.close()
+f = open("small.json", "a")
+f.write(']')
+f.close()
