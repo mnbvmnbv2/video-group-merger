@@ -14,6 +14,8 @@ f = open("small.json", "w")
 f.write('[')
 f.close()
 
+vid_json = []
+
 channels = glob.glob('Channels/*')
 for channel in channels:
     #iterates all videos in all channels
@@ -33,6 +35,8 @@ for channel in channels:
             vals.append(a[1].strip())
             vid_data = dict(zip(keys,vals))
             #add the video as a line to be written to file
+        vid_data['Compressed'] = False
+        vid_json.append(vid_data)
         with open("big.json", "a") as outfile:
             #add json lines
             json.dump(vid_data, outfile)
@@ -41,8 +45,7 @@ for channel in channels:
                 outfile.write(',\n')
 
         #for small format
-        small_format = {k:vid_data[k] for k in ('File Name','File Size','Duration') if k in vid_data}
-        small_format['Compressed'] = False
+        small_format = {k:vid_data[k] for k in ('File Name','File Size','Duration','Compressed') if k in vid_data}
         with open("small.json", "a") as outfile:
             #add json lines
             json.dump(small_format, outfile)
