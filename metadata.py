@@ -45,3 +45,5 @@ if __name__ == '__main__':
         complete_df = pd.concat((old_df, new_vids))
         # save it back as data.csv
         complete_df.to_csv(path + 'data.csv', index=False)
+    else:
+        new_df.to_csv(path + 'data.csv', index=False)
