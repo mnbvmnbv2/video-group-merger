@@ -1,20 +1,13 @@
 import glob
 import subprocess
 import os
-import json
+import pandas as pd
+
 
 #Path to exiftool for file metadata
 exe = 'C:\\Users\Ferdi\\Desktop\\exiftool\\exiftool'
 
-#strip the file to write metadata
-f = open("big.json", "w")
-f.write('[')
-f.close()
-f = open("small.json", "w")
-f.write('[')
-f.close()
-
-vid_json = []
+vids_json = []
 
 channels = glob.glob('Channels/*')
 for channel in channels:
@@ -36,26 +29,11 @@ for channel in channels:
             vid_data = dict(zip(keys,vals))
             #add the video as a line to be written to file
         vid_data['Compressed'] = False
-        vid_json.append(vid_data)
-        with open("big.json", "a") as outfile:
-            #add json lines
-            json.dump(vid_data, outfile)
-            #write for every file except last
-            if idx != len(vids) - 1:
-                outfile.write(',\n')
+        vids_json.append(vid_data)
 
-        #for small format
-        small_format = {k:vid_data[k] for k in ('File Name','File Size','Duration','Compressed') if k in vid_data}
-        with open("small.json", "a") as outfile:
-            #add json lines
-            json.dump(small_format, outfile)
-            #write for every file except last
-            if idx != len(vids) - 1:
-                outfile.write(',\n')
-
-f = open("big.json", "a")
-f.write(']')
-f.close()
-f = open("small.json", "a")
-f.write(']')
-f.close()
+new_df = pd.DataFrame.from_dict(vids_json)
+if os.path.exists('data.csv'):
+    old_df = pd.read_csv('data.csv')
+    new_vids = new_df[~new_df[['File Name', 'Directory']].isin(old_df).any(axis=1)]
+    complete_df = pd.concat((old_df, new_vids))
+    complete_df.to_csv('data.csv')
