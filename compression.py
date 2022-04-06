@@ -1,6 +1,7 @@
 import shutil
 import subprocess
 import pandas as pd
+import time
 
 crf = 34
 
@@ -13,7 +14,10 @@ def compress(df):
         if df.iloc[i, df.columns.get_loc('Compressed')] == False:
             compress_file(df.iloc[i, df.columns.get_loc('Directory')] + '/' + df.iloc[i, df.columns.get_loc('File Name')])
             df.iloc[i, df.columns.get_loc('Compressed')] = True
-            df.to_csv('data.csv')
+            mod_time = time.strftime("%Y:%m:%d %H:%M:%S%z", time.gmtime())
+            mod_time = ":".join(mod_time.split("00", 1)) + '00'
+            df.iloc[i, df.columns.get_loc('File Modification Date/Time')] = mod_time
+            df.to_csv('data.csv', index=False)
 
 df = pd.read_csv('data.csv')
 compress(df)
