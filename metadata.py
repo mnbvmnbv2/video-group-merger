@@ -36,4 +36,4 @@ if os.path.exists('data.csv'):
     old_df = pd.read_csv('data.csv')
     new_vids = new_df[~new_df[['File Name', 'Directory']].isin(old_df).any(axis=1)]
     complete_df = pd.concat((old_df, new_vids))
-    complete_df.to_csv('data.csv')
+    complete_df.to_csv('data.csv', index=False)
