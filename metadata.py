@@ -33,7 +33,11 @@ for channel in channels:
 
 new_df = pd.DataFrame.from_dict(vids_json)
 if os.path.exists('data.csv'):
+    # Load the current data
     old_df = pd.read_csv('data.csv')
+    # Take the difference between the fetched and the old data (based on filename)
+    # This is to avoid changing when Compression and date is changed
     new_vids = new_df[~new_df[['File Name', 'Directory']].isin(old_df).any(axis=1)]
     complete_df = pd.concat((old_df, new_vids))
+    # save it back as data.csv
     complete_df.to_csv('data.csv', index=False)
