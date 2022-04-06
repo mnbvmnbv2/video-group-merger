@@ -3,6 +3,8 @@ import subprocess
 import pandas as pd
 import time
 
+path = ''
+
 def compress_file(filepath, crf=34):
     subprocess.run(['ffmpeg', '-i', filepath, '-vcodec', 'libx264', '-preset', 'veryfast', '-crf', str(crf), filepath+'cpr.mp4'], text=True, input="y")
     shutil.move(filepath+'cpr.mp4', filepath)
@@ -22,7 +24,8 @@ def compress(df):
             mod_time = mod_time[:-2] + ':' + mod_time[-2:]
             df.iloc[i, df.columns.get_loc('File Modification Date/Time')] = mod_time
             #update the csv after each compression
-            df.to_csv('data.csv', index=False)
+            df.to_csv(path + 'data.csv', index=False)
 
-df = pd.read_csv('data.csv')
-compress(df)
+if __name__ == '__main__':
+    df = pd.read_csv(path + 'data.csv')
+    compress(df)
