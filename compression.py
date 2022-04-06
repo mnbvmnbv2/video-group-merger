@@ -3,9 +3,7 @@ import subprocess
 import pandas as pd
 import time
 
-crf = 34
-
-def compress_file(filepath):
+def compress_file(filepath, crf=34):
     subprocess.run(['ffmpeg', '-i', filepath, '-vcodec', 'libx264', '-preset', 'veryfast', '-crf', str(crf), filepath+'cpr.mp4'], text=True, input="y")
     shutil.move(filepath+'cpr.mp4', filepath)
     
