@@ -35,7 +35,7 @@ Bugs etc. (important to know as they could lag behind in already used trials of 
 - Metadata could overwrite compressed videoes.
 - Metadata can contain Error message row
 - Metadata has inconsistent notation for some columns (Duration hh:mm:ss or xx S.)
-
+- Metadata did not have index=False which lead to a huge amount of unnamed index columns over time
 - Merges could happen on group of incomplete videos
 - Metadata is not 100% correct on file creation and modification as files are overwritten and deleted for practical puropses
 - Metadata updating is slow.
@@ -60,4 +60,3 @@ Bugs etc. (important to know as they could lag behind in already used trials of 
 - FFMPEG
 - Exiftool
 - hachoir (no more)
-- 
