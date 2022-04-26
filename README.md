@@ -39,6 +39,9 @@ Bugs etc. (important to know as they could lag behind in already used trials of 
 - Merges could happen on group of incomplete videos
 - Metadata is not 100% correct on file creation and modification as files are overwritten and deleted for practical puropses
 - Metadata updating is slow.
+- There could be mismatched between data.csv and actual metadata that could propagate if the order of the scrips run is wrong or outdated (ex: a file could be deleted, but if metadata is not run compression could try to compress non-existing files)
+- There could be tempfiles from compression (or download/insertion) that could end up in metadata data.csv file if not disposed of.
+- There is no handling for removal of data/actual files to be handeled correctly 
 
 **Libraries**
 - os
