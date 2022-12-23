@@ -1,31 +1,76 @@
+"""Handles compression of video files"""
+import time
+import glob
 import shutil
 import subprocess
+
 import pandas as pd
-import time
 
-path = ''
+from paths import main_folder
 
-def compress_file(filepath, crf=34):
-    subprocess.run(['ffmpeg', '-i', filepath, '-vcodec', 'libx264', '-preset', 'veryfast', '-crf', str(crf), filepath+'cpr.mp4'], text=True, input="y")
-    shutil.move(filepath+'cpr.mp4', filepath)
-    
-def compress(df):
+
+def compress_video(filepath: str, crf=34) -> None:
+    """Compresses video with predefined settings
+
+    Args:
+        filepath: str, string to videofile
+    """
+
+    # compression with ffmpeg to a separate temp video file
+    # (temp file to avoid corrupting main if process is cancelled)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-i",
+            filepath,
+            "-vcodec",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-crf",
+            str(crf),
+            filepath + "_compressing_.mp4",
+        ],
+        text=True,
+        input="y",
+    )
+    # overwrite the main file with the temp file
+    shutil.move(filepath + "_compressing_.mp4", filepath)
+
+
+def compress_in_folder(path: str) -> None:
+    """Compress videos in folder based on dataframe in the folder
+
+    Args:
+        path: path of csv file and videos
+    """
+    # get df in channel
+    df = pd.read_csv(path + "/data.csv")
+
+    # iterate the rows
     for i in range(df.shape[0]):
-        #Check every video in dataframe if it is comrpessed
-        if df.iloc[i, df.columns.get_loc('Compressed')] == False:
-            # runs the compression of the time
-            compress_file(df.iloc[i, df.columns.get_loc('Directory')] + '/' + df.iloc[i, df.columns.get_loc('File Name')])
+        # Check every video in dataframe if it is compressed
+        if not df.iloc[i]["Compressed"]:
+            # runs the compression of the video
+            compress_video(df.iloc[i]["Directory"] + "/" + df.iloc[i]["File Name"])
 
-            df.iloc[i, df.columns.get_loc('Compressed')] = True
+            # set compression to true
+            df.iloc[i]["Compressed"] = True
 
-            #Gets the current time
+            # Gets the current time
             mod_time = time.strftime("%Y:%m:%d %H:%M:%S%z", time.gmtime())
-            #add : to the local time difference to get correct format
-            mod_time = mod_time[:-2] + ':' + mod_time[-2:]
-            df.iloc[i, df.columns.get_loc('File Modification Date/Time')] = mod_time
-            #update the csv after each compression
-            df.to_csv(path + 'data.csv', index=False)
+            # add : to the local time difference to get correct format
+            mod_time = mod_time[:-2] + ":" + mod_time[-2:]
+            # update time in dataframe
+            df.iloc[i]["File Modification Date/Time"] = mod_time
+            # update the csv after each compression
+            df.to_csv(path + "/data.csv", index=False)
 
-if __name__ == '__main__':
-    df = pd.read_csv(path + 'data.csv')
-    compress(df)
+
+if __name__ == "__main__":
+    # get a list of channels
+    channels = glob.glob(main_folder + "Channels/*")
+    # iterate channels
+    for channel in channels:
+        # compress videos in folder
+        compress_in_folder(channel)

@@ -1,4 +1,5 @@
+.ipynb_checkpoints
+__pycache__
 Channels/
 test.ipynb
-data.csv
-.ipynb_checkpoints
+paths.py
