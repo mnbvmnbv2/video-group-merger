@@ -55,14 +55,14 @@ def compress_in_folder(path: str) -> None:
             compress_video(df.iloc[i]["Directory"] + "/" + df.iloc[i]["File Name"])
 
             # set compression to true
-            df.iloc[i]["Compressed"] = True
+            df.at[i, "Compressed"] = True
 
             # Gets the current time
             mod_time = time.strftime("%Y:%m:%d %H:%M:%S%z", time.gmtime())
             # add : to the local time difference to get correct format
             mod_time = mod_time[:-2] + ":" + mod_time[-2:]
             # update time in dataframe
-            df.iloc[i]["File Modification Date/Time"] = mod_time
+            df.at[i, "File Modification Date/Time"] = mod_time
             # update the csv after each compression
             df.to_csv(path + "/data.csv", index=False)
 
