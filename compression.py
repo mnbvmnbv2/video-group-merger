@@ -52,7 +52,10 @@ def compress_in_folder(path: str) -> None:
         # Check every video in dataframe if it is compressed
         if not df.iloc[i]["Compressed"]:
             # runs the compression of the video
-            compress_video(df.iloc[i]["Directory"] + "/" + df.iloc[i]["File Name"])
+            try:
+                compress_video(df.iloc[i]["Directory"] + "/" + df.iloc[i]["File Name"])
+            except:
+                print("Failed to compress")
 
             # set compression to true
             df.at[i, "Compressed"] = True
