@@ -5,6 +5,7 @@ import shutil
 import subprocess
 
 import pandas as pd
+from pandas.errors import EmptyDataError
 
 from paths import main_folder
 
@@ -44,8 +45,13 @@ def compress_in_folder(path: str) -> None:
     Args:
         path: path of csv file and videos
     """
-    # get df in channel
-    df = pd.read_csv(path + "/data.csv")
+    # get df in channel if not empty
+    try:
+        df = pd.read_csv(path + "/data.csv")
+    except EmptyDataError:
+        # if emtpy return out of function
+        print("Empty CSV")
+        return
 
     # iterate the rows
     for i in range(df.shape[0]):
@@ -75,5 +81,7 @@ if __name__ == "__main__":
     channels = glob.glob(main_folder + "Channels/*")
     # iterate channels
     for channel in channels:
+        # output current channel
+        print(channel)
         # compress videos in folder
         compress_in_folder(channel)
