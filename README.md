@@ -63,3 +63,8 @@ Bugs etc. (important to know as they could lag behind in already used trials of 
 - FFMPEG
 - Exiftool
 - hachoir (no more)
+
+## Statistics
+
+#### Compression
+Ran compression on about 3100 videos of ~560GB. Compressed to ~160GB in about 12 days (24 hours a day).
