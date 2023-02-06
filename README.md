@@ -79,6 +79,9 @@ should include:
 #### Compression
 Ran compression on about 3100 videos of ~560GB. Compressed to ~160GB in about 15 days (24 hours a day) on a 4 core CPU (1.5-4.5 GHz) laptop.
 
+#### Mergers
+Using FFMPEG instead of moviepy resulted in about 1000x speedup, not sure why.
+
 
 ## Guide
 
@@ -96,6 +99,8 @@ Step by step:
 4. 
 
 5. NB: Cannot go back and rerun from 3. now!!
+
+Do not run mergersdata after mergers, or upload as it overwrites the json-file.
 
 KNown bug, sorting (by date etc) is not always correct.
 The final metadata is not correct, but it can still be fun to use for data analysis/exploration.
