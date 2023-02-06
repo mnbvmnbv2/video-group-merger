@@ -1,6 +1,6 @@
 # YoutubeUploader
 
-A collection of scripts for compression, merging and uploading videos to youtube.
+A collection of scripts for compression, merging and uploading of videos to youtube.
 
 This is made for groups of videoes (course-videos etc.) that might need to be setup a specific way.
 
@@ -78,3 +78,36 @@ should include:
 
 #### Compression
 Ran compression on about 3100 videos of ~560GB. Compressed to ~160GB in about 15 days (24 hours a day) on a 4 core CPU (1.5-4.5 GHz) laptop.
+
+
+## Guide
+
+First of all, this is not optimal.
+All of these scrips have been part of a journey where I have learned a lot, and now that it works for its intended purpose I will discontinue updates.
+And processing videos takes A LOT of time, wow.
+
+The goal was also to learn so I have used different tools where perhaps only one should be used and not all edge cases and redunandacy is assured.
+For example the scripts have to be run in order and it is not failsafe to run out of order, details below.
+
+Step by step:
+1. Create the appropriate folders
+2. Put videos in folders (NB: Naming)
+3. Run metadata.py
+4. 
+
+5. NB: Cannot go back and rerun from 3. now!!
+
+KNown bug, sorting (by date etc) is not always correct.
+The final metadata is not correct, but it can still be fun to use for data analysis/exploration.
+
+There might be temp files from compressing or merging ling (?) about. Be careful about reruns of metadata and mergersdata etc.
+
+Be careful about space. While compression is meant to save space, mergers increases it by 2x so be sure to either remove merged videos (or when uploaded to youtube), or have enough space.
+
+TODO:
+Everything should be f-string, all "/" should be either `/` or `\\\\`, and open should use enconding.
+
+Mergers is superslow. Maybe speedup with FFMPEG or GPU?
+
+In heindsight:
+Compression might be too intense. Audio is a bit distorted...
