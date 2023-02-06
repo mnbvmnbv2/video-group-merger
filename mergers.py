@@ -1,23 +1,45 @@
 """Handles merging of video files"""
+import os
 import glob
 import json
-
-import moviepy.editor
 
 from paths import main_folder
 
 
+def save_flist(videos: list) -> None:
+    """Transforms a list of videos into a text file of videos on FFMPEG format
+
+    Args:
+        videos (list): List of videos
+    """
+    f_data = "file " + "\nfile ".join(videos)
+
+    f_list = "list.txt"
+    with open(f_list, "w", encoding="UTF-8") as f:
+        f.write(f_data)
+    return f_list
+
+
 def merge_videos(path: str) -> None:
-    """Merge videos in folder and create a summary file"""
+    """Merge videos from descriptions by mergersdata.json file
+
+    Args:
+        path (str): path to channel folder
+    """
 
     # get mergerdata json file if it exists
     try:
         f = open(path + "\\\\mergerdata.json")
     except FileNotFoundError:
+        print(f"Did not find mergerdata in {path}")
         return
 
     # load in json as dictionary
     mergersdata = json.load(f)
+
+    # edit path to FFMPEG format
+    FFM_path = path.replace("\\", "\\\\")
+    FFM_path = FFM_path.replace(" ", "\\ ")
 
     # iterate over group (videos)
     for idx, group in enumerate(mergersdata):
@@ -40,23 +62,26 @@ def merge_videos(path: str) -> None:
             for video in videos:
                 print(video)
                 # get video path
-                video_path = path + "\\\\" + video
+                video_path = FFM_path + "\\\\" + video.replace(" ", "\\ ")
 
-                # combine video and audio
-                clip = moviepy.editor.VideoFileClip(video_path)
-                audioclip = moviepy.editor.AudioFileClip(video_path)
-                videoclip = clip.set_audio(audioclip)
-                processed_videos.append(videoclip)
+                processed_videos.append(video_path)
 
             # combine videos into final merged videofile
-            final = moviepy.editor.concatenate_videoclips(processed_videos)
-            # set name of file
-            final.write_videofile(path + "/" + group["name"] + ".mp4")
+            save_flist(processed_videos)
+
+            FFM_out = group["name"] + ".mp4"
+
+            # only supporte the same video_format, copy and not recode.
+            call = (
+                f'ffmpeg -f concat -safe 0 -i list.txt -c copy "{path}\\\\{FFM_out}" -y'
+            )
+
+            os.system(call)
 
             # set json group as finished merging
             group["merged"] = True
             # update json-file
-            with open(f"{folder}\\\\mergerdata.json", "w") as outfile:
+            with open(f"{path}\\\\mergerdata.json", "w") as outfile:
                 json.dump(mergersdata, outfile)
 
 
