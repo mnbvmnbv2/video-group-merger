@@ -11,6 +11,7 @@ import googleapiclient.errors
 
 from googleapiclient.http import MediaFileUpload
 from paths import client_secret_key, main_folder
+from Keys.youtube_API_key import key
 
 
 scopes = ["https://www.googleapis.com/auth/youtube.upload"]
@@ -23,14 +24,21 @@ def upload_from_json(path_to_channel: str) -> None:
         path_to_json (str): Path to json file which should be beside videos
     """
     # load in json as dictionary
-    mergersdata = json.load(path_to_channel + "\\\\mergersdata.json")
+    try:
+        f = open(path_to_channel + "\\\\mergerdata.json", encoding="UTF-8")
+    except FileNotFoundError:
+        print(f"Did not find mergerdata in {path_to_channel}")
+        return
+
+    mergersdata = json.load(f)
 
     # Disable OAuthlib's HTTPS verification when running locally.
     # *DO NOT* leave this option enabled in production.
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0"
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
     api_service_name = "youtube"
     api_version = "v3"
+    DEVELOPER_KEY = key
 
     # iterate over each video
     # iterate over group (videos)
@@ -44,6 +52,7 @@ def upload_from_json(path_to_channel: str) -> None:
         except KeyError:
             merged = False
 
+        # get uploaded status (or if it is not set)
         try:
             uploaded = group["uploaded"]
         except KeyError:
@@ -57,7 +66,7 @@ def upload_from_json(path_to_channel: str) -> None:
         title = group["name"]
         description = "Chapters:\n"
         for idx, chapter in enumerate(group["chapters"]):
-            description += f"{chapter}: {group['videos']}\n"
+            description += f"{chapter}: {group['videos'][idx]}\n"
         tags = ["Education"]
 
         # Get credentials and create an API client
@@ -69,8 +78,13 @@ def upload_from_json(path_to_channel: str) -> None:
             api_service_name, api_version, credentials=credentials
         )
 
+        # Setup credentials and access API
+        # youtube = googleapiclient.discovery.build(
+        #     api_service_name, api_version, developerKey=DEVELOPER_KEY
+        # )
+
         media = MediaFileUpload(
-            f"{path_to_channel}\\\\{group['name']}", mimetype=None, resumable=True
+            f"{path_to_channel}\\{group['name']}.mp4", mimetype=None, resumable=True
         )
 
         request = youtube.videos().insert(
