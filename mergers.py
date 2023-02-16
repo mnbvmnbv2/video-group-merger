@@ -40,6 +40,7 @@ def merge_videos(path: str) -> None:
     # edit path to FFMPEG format
     FFM_path = path.replace("\\", "\\\\")
     FFM_path = FFM_path.replace(" ", "\\ ")
+    FFM_path = FFM_path.replace("'", "\\'")
 
     # iterate over group (videos)
     for idx, group in enumerate(mergersdata):
