@@ -22,6 +22,9 @@ def create_mergerdata(folder: str, channel: str) -> None:
     except pd.errors.EmptyDataError:  # if empty csv
         return
 
+    # sort df
+    df = df.sort_values("File Name")
+
     # set time limit and time counter for limiting merge video length
     time_limit = datetime.timedelta(hours=10)
     time_counter = datetime.timedelta()
