@@ -2,6 +2,8 @@
 import os
 import glob
 import json
+import shutil
+import time
 
 from paths import main_folder
 
@@ -57,13 +59,29 @@ def merge_videos(path: str) -> None:
             # get videos in group
             videos = group["videos"]
 
+            # remove and create new temp_videos folder
+            shutil.rmtree(f"temp_videos", ignore_errors=True)
+            os.mkdir(f"temp_videos")
+
             # setup list of videos for moviepy to merge
             processed_videos = []
             # iterate videos
             for video in videos:
                 print(video)
-                # get video path
-                video_path = FFM_path + "\\\\" + video.replace(" ", "\\ ")
+                # edit video name to FFMPEG format
+                # video_name = video.replace("\\", "\\\\")
+                # video_name = video_name.replace(" ", "\\ ")
+                # video_name = video_name.replace("'", "\\'")
+
+                # get original video path
+                orig_video_path = path + "\\" + video
+                print(orig_video_path)
+                # set output video path
+                video_path = f"temp_videos\\{video}"
+
+                os.system(
+                    f'ffmpeg -y -i "{orig_video_path}" -vf "setpts=1.25*PTS" -r 15 "{video_path}"'
+                )
 
                 processed_videos.append(video_path)
 

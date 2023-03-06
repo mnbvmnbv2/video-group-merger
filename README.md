@@ -81,6 +81,7 @@ Ran compression on about 3100 videos of ~560GB. Compressed to ~160GB in about 15
 
 #### Mergers
 Using FFMPEG instead of moviepy resulted in about 1000x speedup, not sure why.
+All videos (3100) took some hours to merge.
 
 
 ## Guide
@@ -100,6 +101,8 @@ Step by step:
 
 5. NB: Cannot go back and rerun from 3. now!!
 
+9. Added sorting in mergersdata, but filenames should be named 01 if numbers go above 9 for example
+
 Do not run mergersdata after mergers, or upload as it overwrites the json-file.
 
 KNown bug, sorting (by date etc) is not always correct.
@@ -116,3 +119,6 @@ Mergers is superslow. Maybe speedup with FFMPEG or GPU?
 
 In heindsight:
 Compression might be too intense. Audio is a bit distorted...
+
+
+Mergerdata does not sort! Videos comes in wrong order...
