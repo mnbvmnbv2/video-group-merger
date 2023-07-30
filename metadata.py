@@ -5,7 +5,7 @@ import subprocess
 
 import pandas as pd
 
-from paths import main_folder, exiftool
+from paths import main_folder
 
 
 def create_metadata(path: str):
@@ -23,9 +23,8 @@ def create_metadata(path: str):
 
     for video in videos:
         # getting the metadata for a video with subprocess running exiftool
-        # exiftool is path to exiftool on your computer
         process = subprocess.Popen(
-            [exiftool, video],
+            ["exiftool", video],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             universal_newlines=True,
