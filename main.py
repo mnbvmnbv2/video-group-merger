@@ -1,0 +1,144 @@
+import os
+import datetime
+import shutil
+import glob
+import json
+import subprocess
+
+
+def get_duration(filename) -> datetime.timedelta:
+    """Get duration of video. From: https://stackoverflow.com/questions/3844430/how-to-get-the-duration-of-a-video-in-python
+
+    Args:
+        filename (str): Path to video
+
+    Returns:
+        datetime.timedelta: Duration of video
+    """
+    result = subprocess.check_output(
+        f'ffprobe -v quiet -show_streams -select_streams v:0 -of json "{filename}"', shell=True
+    ).decode()
+    fields = json.loads(result)["streams"][0]
+
+    duration = float(fields["duration"])
+    return datetime.timedelta(seconds=duration)
+
+
+def write_chapters(filename, chapters) -> None:
+    """Write chapters to a text file
+
+    Args:
+        filename (str): Path to file
+        chapters (list): List of chapters
+    """
+    with open(filename, "w") as f:
+        for i, (name, path, duration) in enumerate(chapters):
+            timestamp = f"{int(duration.seconds/3600):02}:{int(duration.seconds/60)%60:02}:{int(duration.seconds)%60:02}"
+            f.write(f"{timestamp} - {name}\n")
+
+
+def save_flist(videos: list) -> None:
+    """Transforms a list of videos into a text file of videos on FFMPEG format
+
+    Args:
+        videos (list): List of videos
+    """
+    f_data = "file '" + "'\nfile '".join(videos) + "'"
+
+    f_list = "temp/list.txt"
+    with open(f_list, "w", encoding="UTF-8") as f:
+        f.write(f_data)
+
+
+def merge_videos(merged_filename, chapters) -> None:
+    """Merge videos from chapters list to merged_filename
+
+    Args:
+        merged_filename (str): Path to merged video
+        chapters (list): List of chapters
+    """
+    # get merged status (not set in mergerdata)
+
+    # remove and create new temp_videos folder
+    shutil.rmtree("temp", ignore_errors=True)
+    os.mkdir("temp")
+    # setup list of videos for merge
+    processed_videos = []
+
+    # iterate over group (videos)
+    for idx, (filename, filepath, duration) in enumerate(chapters):
+        # set output video path
+        out_video_path = f"temp\{filename[:-4]}.mp4"
+
+        call = f'ffmpeg -y -i "{filepath}" -max_interleave_delta 0 -vf "setpts=1.25*PTS, fps=24" -c:v h264_nvenc -r 15 "{out_video_path}"'
+        os.system(call)
+
+        processed_videos.append(out_video_path[5:])
+        # TODO intermediate saving to avoid duplicate processing if error occurs
+
+    # combine videos into final merged videofile
+    save_flist(processed_videos)
+
+    # only support the same video_format, copy and not recode.
+    call = f'ffmpeg -f concat -safe 0 -i temp\\list.txt -c copy "{merged_filename}" -y'
+    os.system(call)
+
+    # TODO update that the group has been merged
+
+
+def main(root_dir):
+    # Create output directory
+    os.makedirs("output", exist_ok=True)
+    time_limit = datetime.timedelta(hours=10)
+
+    # Walk through all files in the directory that contains the videos
+    folders = glob.glob(root_dir + "/*")
+
+    for folder in folders:
+        folder_name = folder.split("\\")[-1]
+        print(f"Folder: {folder_name}")
+        video_paths = glob.glob(folder + "/*")
+        files = [f for f in video_paths if f.endswith(".mp4")]
+        files.sort()
+        merged_videos = 0
+        chapters = []
+        time_counter = datetime.timedelta()
+
+        for filepath in files:
+            filename = filepath.split("\\")[-1]
+            duration = get_duration(filepath)
+
+            print(f"Name: {filename} Duration: {duration}")
+
+            # check if total exceeds limit
+            if time_counter + duration > time_limit:
+                # merge videos
+                merged_videos += 1
+                print(f"Chapters: {chapters}")
+                merge_videos(f"output\\\\{folder_name}-{merged_videos}.mp4", chapters)
+
+                # write chapters
+                write_chapters(f"output\\\\{folder_name}-{merged_videos}.txt", chapters)
+
+                # reset merge_videos and chapters
+                chapters = []
+
+                # reset time_counter
+                time_counter = datetime.timedelta()
+            else:
+                chapters.append((filename, filepath, time_counter))
+
+                # add time to counter
+                time_counter += duration
+
+        # merge last group of videos
+        merged_videos += 1
+        print(f"Chapters: {chapters}")
+        merge_videos(f"output\\\\{folder_name}-{merged_videos}.mp4", chapters)
+
+        # write chapters
+        write_chapters(f"output\\\\{folder_name}-{merged_videos}.txt", chapters)
+
+
+if __name__ == "__main__":
+    main("C:\Channels")
