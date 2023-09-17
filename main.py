@@ -1,12 +1,13 @@
-import os
 import datetime
-import shutil
 import glob
 import json
+import os
+import shutil
 import subprocess
+import typing
 
 
-def get_duration(filename) -> datetime.timedelta:
+def get_duration(filename: str) -> datetime.timedelta:
     """Get duration of video. From: https://stackoverflow.com/questions/3844430/how-to-get-the-duration-of-a-video-in-python
 
     Args:
@@ -24,12 +25,12 @@ def get_duration(filename) -> datetime.timedelta:
     return datetime.timedelta(seconds=duration)
 
 
-def write_chapters(filename, chapters) -> None:
+def write_chapters(filename: str, chapters: list) -> None:
     """Write chapters to a text file
 
     Args:
         filename (str): Path to file
-        chapters (list): List of chapters
+        chapters (list): List of chapters on format [(name, path, duration), ...]
     """
     with open(filename, "w") as f:
         for i, (name, path, duration) in enumerate(chapters):
@@ -37,11 +38,11 @@ def write_chapters(filename, chapters) -> None:
             f.write(f"{timestamp} - {name}\n")
 
 
-def save_flist(videos: list) -> None:
+def save_flist(videos: typing.List[str]) -> None:
     """Transforms a list of videos into a text file of videos on FFMPEG format
 
     Args:
-        videos (list): List of videos
+        videos (typing.List[str]): List of videos on format [video1, video2, ...]
     """
     f_data = "file '" + "'\nfile '".join(videos) + "'"
 
@@ -50,12 +51,12 @@ def save_flist(videos: list) -> None:
         f.write(f_data)
 
 
-def merge_videos(merged_filename, chapters) -> None:
+def merge_videos(merged_filename: str, chapters: list) -> None:
     """Merge videos from chapters list to merged_filename
 
     Args:
         merged_filename (str): Path to merged video
-        chapters (list): List of chapters
+        chapters (list): List of chapters on format [(name, path, duration), ...]
     """
     # get merged status (not set in mergerdata)
 
@@ -86,10 +87,17 @@ def merge_videos(merged_filename, chapters) -> None:
     # TODO update that the group has been merged
 
 
-def main(root_dir):
+def main(root_dir: str, time_limit: datetime.timedelta = datetime.timedelta(hours=12)):
+    """Main function.
+
+    For each folder in root_dir, merge all videos in the folder to a single video. The merged videos will be saved in the output folder.
+
+    Args:
+        root_dir (str): Path to root directory
+        time_limit (datetime.timedelta, optional): Time limit for each merged video. Defaults to datetime.timedelta(hours=12).
+    """
     # Create output directory
     os.makedirs("output", exist_ok=True)
-    time_limit = datetime.timedelta(hours=10)
 
     # Walk through all files in the directory that contains the videos
     folders = glob.glob(root_dir + "/*")
@@ -100,7 +108,7 @@ def main(root_dir):
         video_paths = glob.glob(folder + "/*")
         files = [f for f in video_paths if f.endswith(".mp4")]
         files.sort()
-        merged_videos = 0
+        merged_videos = 1
         chapters = []
         time_counter = datetime.timedelta()
 
