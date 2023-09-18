@@ -38,7 +38,7 @@ def write_chapters(filename: str, chapters: typing.List[ChapterInfo]) -> None:
     """
     with open(filename, "w") as f:
         for i, c in enumerate(chapters):
-            timestamp = f"{int(c.duration.seconds/3600):02}:{int(c.duration.seconds/60)%60:02}:{int(c.duration.seconds)%60:02}"
+            timestamp = f"{int(c.time_start.seconds/3600):02}:{int(c.time_start.seconds/60)%60:02}:{int(c.time_start.seconds)%60:02}"
             f.write(f"{timestamp} - {c.name}\n")
 
 
@@ -86,7 +86,7 @@ def merge_videos(merged_filename: str, chapters: typing.List[ChapterInfo], verbo
 
         print(f"Processing '{c.name}', {idx+1}/{len(chapters)}, {c.time_start} - {c.time_end}, {c.duration}")
 
-        call = f'ffmpeg -y -i "{c.path}" -max_interleave_delta 0 -vf "setpts=1.00*PTS, fps=24" -c:v h264_nvenc -r 15 "{out_video_path}"'
+        call = f'ffmpeg -y -i "{c.path}" -max_interleave_delta 0 -vf "scale=-1:720" -c:v h264_nvenc -b:v 1000k -r 15 "{out_video_path}"'
         if not verbose:
             call += " -loglevel fatal"
         os.system(call)
@@ -119,20 +119,20 @@ def extract_numbers(string: str) -> tuple[int, str]:
     return tuple(map(int, numbers)) + (string,)
 
 
-def main(
-    root_dir: str, time_limit: datetime.timedelta = datetime.timedelta(hours=12), verbose_ffmpeg: bool = False
-):
+def main(root_dir: str, time_limit_hours: int = 12, verbose_ffmpeg: bool = False):
     """Main function.
 
     For each folder in root_dir, merge all videos in the folder to a single video. The merged videos will be saved in the output folder.
 
     Args:
         root_dir (str): Path to root directory
-        time_limit (datetime.timedelta, optional): Time limit for each merged video. Defaults to datetime.timedelta(hours=12).
+        time_limit_hours (int, optional): Time limit for each merged video in hours. Defaults to 12.
         verbose_ffmpeg (bool, optional): Verbose ffmpeg. Defaults to False.
     """
     # Create output directory
     os.makedirs("output", exist_ok=True)
+
+    time_limit = datetime.timedelta(hours=time_limit_hours)
 
     # Walk through all files in the directory that contains the videos
     folders = glob.glob(root_dir + "/*")
@@ -187,4 +187,8 @@ def main(
 
 
 if __name__ == "__main__":
-    main("C:\Channels")
+    main(
+        "C:\Channels",
+        time_limit_hours=12,
+        verbose_ffmpeg=True,
+    )
