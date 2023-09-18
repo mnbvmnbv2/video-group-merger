@@ -6,6 +6,9 @@ import re
 import shutil
 import subprocess
 import typing
+from collections import namedtuple
+
+ChapterInfo = namedtuple("ChapterInfo", ["name", "path", "time_start", "time_end", "duration"])
 
 
 def get_duration(filename: str) -> datetime.timedelta:
@@ -26,17 +29,17 @@ def get_duration(filename: str) -> datetime.timedelta:
     return datetime.timedelta(seconds=duration)
 
 
-def write_chapters(filename: str, chapters: list) -> None:
+def write_chapters(filename: str, chapters: typing.List[ChapterInfo]) -> None:
     """Write chapters to a text file
 
     Args:
         filename (str): Path to file
-        chapters (list): List of chapters on format [(name, path, duration), ...]
+        chapters (typing.List[ChapterInfo]): List of chapters on format [(name, path, time_start, time_end, duration), ...]
     """
     with open(filename, "w") as f:
-        for i, (name, path, duration) in enumerate(chapters):
-            timestamp = f"{int(duration.seconds/3600):02}:{int(duration.seconds/60)%60:02}:{int(duration.seconds)%60:02}"
-            f.write(f"{timestamp} - {name}\n")
+        for i, c in enumerate(chapters):
+            timestamp = f"{int(c.duration.seconds/3600):02}:{int(c.duration.seconds/60)%60:02}:{int(c.duration.seconds)%60:02}"
+            f.write(f"{timestamp} - {c.name}\n")
 
 
 def save_flist(videos: typing.List[str]) -> None:
@@ -52,12 +55,20 @@ def save_flist(videos: typing.List[str]) -> None:
         f.write(f_data)
 
 
-def merge_videos(merged_filename: str, chapters: list, verbose: bool = False) -> None:
-    """Merge videos from chapters list to merged_filename
+def merge_videos(merged_filename: str, chapters: typing.List[ChapterInfo], verbose: bool = False) -> None:
+    """Merge videos from chapters list to merged_filename.
+
+    Process:
+        1. Remove and create new temp_videos folder
+        2. Iterate over group (videos)
+            2.1. Set output video path
+            2.2. Process video
+            2.3. Append video to processed_videos
+        3. Combine videos into final merged videofile
 
     Args:
         merged_filename (str): Path to merged video
-        chapters (list): List of chapters on format [(name, path, duration), ...]
+        chapters (typing.List[ChapterInfo]): List of chapters on format [(name, path, time_start, time_end, duration), ...]
         verbose (bool, optional): Verbose ffmpeg. Defaults to False.
     """
     # TODO get merged status (not set in mergerdata)
@@ -69,13 +80,13 @@ def merge_videos(merged_filename: str, chapters: list, verbose: bool = False) ->
     processed_videos = []
 
     # iterate over group (videos)
-    for idx, (filename, filepath, duration) in enumerate(chapters):
+    for idx, c in enumerate(chapters):
         # set output video path
-        out_video_path = f"temp\{filename[:-4]}.mp4"
+        out_video_path = f"temp\{c.name[:-4]}.mp4"
 
-        print(f"Processing '{filename}', {idx+1}/{len(chapters)}, {duration}")
+        print(f"Processing '{c.name}', {idx+1}/{len(chapters)}, {c.time_start} - {c.time_end}, {c.duration}")
 
-        call = f'ffmpeg -y -i "{filepath}" -max_interleave_delta 0 -vf "setpts=1.00*PTS, fps=24" -c:v h264_nvenc -r 15 "{out_video_path}"'
+        call = f'ffmpeg -y -i "{c.path}" -max_interleave_delta 0 -vf "setpts=1.00*PTS, fps=24" -c:v h264_nvenc -r 15 "{out_video_path}"'
         if not verbose:
             call += " -loglevel fatal"
         os.system(call)
@@ -160,13 +171,14 @@ def main(
                 # increment merged_videos counter
                 merged_videos += 1
             else:
-                chapters.append((filename, filepath, time_counter))
+                chapters.append(
+                    ChapterInfo(filename, filepath, time_counter, time_counter + duration, duration)
+                )
 
                 # add time to counter
                 time_counter += duration
 
         # merge last group of videos
-        merged_videos += 1
         print(f"Chapters: {chapters}")
         merge_videos(f"output\\\\{folder_name}-{merged_videos}.mp4", chapters, verbose=verbose_ffmpeg)
 
