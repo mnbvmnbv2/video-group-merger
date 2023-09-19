@@ -78,9 +78,20 @@ def merge_videos(
 
     encoder = "h264_nvenc" if gpu else "libx264"
 
-    # remove and create new temp_videos folder
-    shutil.rmtree("temp", ignore_errors=True)
-    os.mkdir("temp")
+    processed_file_path = "temp/processed_videos.txt"
+    if os.path.exists(processed_file_path):
+        with open(processed_file_path, "r", encoding="UTF-8") as f:
+            processed = f.read().splitlines()
+    else:
+        processed = []
+
+    # check if any videos have been processed
+    video_paths = [c.path for c in chapters]
+    if not any(p in processed for p in video_paths):
+        # remove and create new temp_videos folder if no videos have been processed
+        shutil.rmtree("temp", ignore_errors=True)
+        os.mkdir("temp")
+
     # setup list of videos for merge
     processed_videos = []
 
@@ -89,15 +100,26 @@ def merge_videos(
         # set output video path
         out_video_path = f"temp\{c.name[:-4]}.mp4"
 
+        # check if video has been processed
+        if c.path in processed:
+            print(
+                f"Skipping '{c.name}', {idx+1}/{len(chapters)}, {c.time_start} - {c.time_end}, {c.duration}"
+            )
+            processed_videos.append(out_video_path[5:])
+            continue
+
         print(f"Processing '{c.name}', {idx+1}/{len(chapters)}, {c.time_start} - {c.time_end}, {c.duration}")
 
+        # process video
         call = f'ffmpeg -y -i "{c.path}" -max_interleave_delta 0 -vf "scale=-1:720" -c:v {encoder} -b:v 250k -r 15 "{out_video_path}"'
         if not verbose:
             call += " -loglevel fatal"
         os.system(call)
 
         processed_videos.append(out_video_path[5:])
-        # TODO intermediate saving to avoid duplicate processing if error occurs
+
+        with open(processed_file_path, "a", encoding="UTF-8") as f:
+            f.write(c.path + "\n")
 
     # combine videos into final merged videofile
     save_flist(processed_videos)
