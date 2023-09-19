@@ -55,7 +55,9 @@ def save_flist(videos: typing.List[str]) -> None:
         f.write(f_data)
 
 
-def merge_videos(merged_filename: str, chapters: typing.List[ChapterInfo], verbose: bool = False) -> None:
+def merge_videos(
+    merged_filename: str, chapters: typing.List[ChapterInfo], verbose: bool = False, gpu: bool = True
+) -> None:
     """Merge videos from chapters list to merged_filename.
 
     Process:
@@ -70,8 +72,11 @@ def merge_videos(merged_filename: str, chapters: typing.List[ChapterInfo], verbo
         merged_filename (str): Path to merged video
         chapters (typing.List[ChapterInfo]): List of chapters on format [(name, path, time_start, time_end, duration), ...]
         verbose (bool, optional): Verbose ffmpeg. Defaults to False.
+        gpu (bool, optional): Use GPU for encoding. Defaults to True.
     """
     # TODO get merged status (not set in mergerdata)
+
+    encoder = "h264_nvenc" if gpu else "libx264"
 
     # remove and create new temp_videos folder
     shutil.rmtree("temp", ignore_errors=True)
@@ -86,7 +91,7 @@ def merge_videos(merged_filename: str, chapters: typing.List[ChapterInfo], verbo
 
         print(f"Processing '{c.name}', {idx+1}/{len(chapters)}, {c.time_start} - {c.time_end}, {c.duration}")
 
-        call = f'ffmpeg -y -i "{c.path}" -max_interleave_delta 0 -vf "scale=-1:720" -c:v h264_nvenc -b:v 1000k -r 15 "{out_video_path}"'
+        call = f'ffmpeg -y -i "{c.path}" -max_interleave_delta 0 -vf "scale=-1:720" -c:v {encoder} -b:v 250k -r 15 "{out_video_path}"'
         if not verbose:
             call += " -loglevel fatal"
         os.system(call)
@@ -119,7 +124,7 @@ def extract_numbers(string: str) -> tuple[int, str]:
     return tuple(map(int, numbers)) + (string,)
 
 
-def main(root_dir: str, time_limit_hours: int = 12, verbose_ffmpeg: bool = False):
+def main(root_dir: str, time_limit_hours: int = 12, verbose_ffmpeg: bool = False, gpu: bool = True):
     """Main function.
 
     For each folder in root_dir, merge all videos in the folder to a single video. The merged videos will be saved in the output folder.
@@ -128,6 +133,7 @@ def main(root_dir: str, time_limit_hours: int = 12, verbose_ffmpeg: bool = False
         root_dir (str): Path to root directory
         time_limit_hours (int, optional): Time limit for each merged video in hours. Defaults to 12.
         verbose_ffmpeg (bool, optional): Verbose ffmpeg. Defaults to False.
+        gpu (bool, optional): Use GPU for encoding. Defaults to True.
     """
     # Create output directory
     os.makedirs("output", exist_ok=True)
@@ -157,7 +163,9 @@ def main(root_dir: str, time_limit_hours: int = 12, verbose_ffmpeg: bool = False
             if time_counter + duration > time_limit:
                 # merge videos
                 print(f"Chapters: {chapters}")
-                merge_videos(f"output\\\\{folder_name}-{merged_videos}.mp4", chapters, verbose=verbose_ffmpeg)
+                merge_videos(
+                    f"output\\\\{folder_name}-{merged_videos}.mp4", chapters, verbose=verbose_ffmpeg, gpu=gpu
+                )
 
                 # write chapters
                 write_chapters(f"output\\\\{folder_name}-{merged_videos}.txt", chapters)
@@ -180,7 +188,9 @@ def main(root_dir: str, time_limit_hours: int = 12, verbose_ffmpeg: bool = False
 
         # merge last group of videos
         print(f"Chapters: {chapters}")
-        merge_videos(f"output\\\\{folder_name}-{merged_videos}.mp4", chapters, verbose=verbose_ffmpeg)
+        merge_videos(
+            f"output\\\\{folder_name}-{merged_videos}.mp4", chapters, verbose=verbose_ffmpeg, gpu=gpu
+        )
 
         # write chapters
         write_chapters(f"output\\\\{folder_name}-{merged_videos}.txt", chapters)
@@ -191,4 +201,5 @@ if __name__ == "__main__":
         "C:\Channels",
         time_limit_hours=12,
         verbose_ffmpeg=True,
+        gpu=True,
     )
