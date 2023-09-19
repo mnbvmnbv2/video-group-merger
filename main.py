@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import json
 import re
@@ -57,8 +58,16 @@ def save_flist(video_paths: typing.List[Path]) -> None:
 
 def run_command(command: str, verbose: bool) -> None:
     """Helper function to run a shell command."""
-    args = command if verbose else command + " -loglevel fatal"
-    subprocess.run(args, shell=True)
+    command = command if verbose else command + " -loglevel fatal"
+    try:
+        if not verbose:
+            subprocess.run(command, shell=True, stderr=subprocess.PIPE, check=True)
+        else:
+            subprocess.run(command, shell=True, check=True)
+    except subprocess.CalledProcessError as error:
+        print(f"Command failed: {error.cmd}")
+        print(error.stderr.decode())
+        raise
 
 
 def merge_videos(
@@ -242,11 +251,26 @@ def main(
             process_folder(output_folder, folder, time_limit, verbose_ffmpeg, gpu)
 
 
+# Add command-line argument parsing
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Merge videos in folders.")
+    parser.add_argument("root_dir", type=str, help="Path to root directory containing videos.")
+    parser.add_argument("output_folder", type=str, help="Path to output folder.")
+    parser.add_argument(
+        "--time_limit_hours", type=int, default=12, help="Time limit for each merged video in hours."
+    )
+    parser.add_argument("--verbose_ffmpeg", action="store_true", help="Enable verbose output for ffmpeg.")
+    parser.add_argument("--gpu", action="store_true", help="Use GPU for video encoding.")
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = parse_arguments()
+
     main(
-        "C:\Channels",
-        "output",
-        time_limit_hours=12,
-        verbose_ffmpeg=True,
-        gpu=True,
+        root_dir=args.root_dir,
+        output_folder=args.output_folder,
+        time_limit_hours=args.time_limit_hours,
+        verbose_ffmpeg=args.verbose_ffmpeg,
+        gpu=args.gpu,
     )
