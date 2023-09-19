@@ -55,6 +55,12 @@ def save_flist(videos: typing.List[str]) -> None:
         f.write(f_data)
 
 
+def run_command(command: str, verbose: bool) -> None:
+    """Helper function to run a shell command."""
+    args = command if verbose else command + " -loglevel fatal"
+    subprocess.run(args, shell=True)
+
+
 def merge_videos(
     merged_filename: str, chapters: typing.List[ChapterInfo], verbose: bool = False, gpu: bool = True
 ) -> None:
@@ -79,11 +85,10 @@ def merge_videos(
     encoder = "h264_nvenc" if gpu else "libx264"
 
     processed_file_path = "temp/processed_videos.txt"
+    processed = set()
     if os.path.exists(processed_file_path):
         with open(processed_file_path, "r", encoding="UTF-8") as f:
-            processed = f.read().splitlines()
-    else:
-        processed = []
+            processed = set(f.read().splitlines())
 
     # check if any videos have been processed
     video_paths = [c.path for c in chapters]
@@ -102,31 +107,25 @@ def merge_videos(
 
         # check if video has been processed
         if c.path in processed:
-            print(
-                f"Skipping '{c.name}', {idx+1}/{len(chapters)}, {c.time_start} - {c.time_end}, {c.duration}"
+            print(f"Skipping '{c.name}', {idx+1}/{len(chapters)} {c.time_start}-{c.time_end} {c.duration}")
+        else:
+            print(f"Processing '{c.name}', {idx+1}/{len(chapters)} {c.time_start}-{c.time_end} {c.duration}")
+
+            # process video
+            run_command(
+                f'ffmpeg -y -i "{c.path}" -max_interleave_delta 0 -vf "scale=-1:720" -c:v {encoder} -b:v 250k -r 15 "{out_video_path}"',
+                verbose,
             )
-            processed_videos.append(out_video_path[5:])
-            continue
-
-        print(f"Processing '{c.name}', {idx+1}/{len(chapters)}, {c.time_start} - {c.time_end}, {c.duration}")
-
-        # process video
-        call = f'ffmpeg -y -i "{c.path}" -max_interleave_delta 0 -vf "scale=-1:720" -c:v {encoder} -b:v 250k -r 15 "{out_video_path}"'
-        if not verbose:
-            call += " -loglevel fatal"
-        os.system(call)
+            with open(processed_file_path, "a", encoding="UTF-8") as f:
+                f.write(c.path + "\n")
 
         processed_videos.append(out_video_path[5:])
-
-        with open(processed_file_path, "a", encoding="UTF-8") as f:
-            f.write(c.path + "\n")
 
     # combine videos into final merged videofile
     save_flist(processed_videos)
 
     # only support the same video_format, copy and not recode.
-    call = f'ffmpeg -f concat -safe 0 -i temp\\list.txt -c copy "{merged_filename}" -y'
-    os.system(call)
+    run_command(f'ffmpeg -f concat -safe 0 -i temp\\list.txt -c copy "{merged_filename}" -y', verbose)
 
     # TODO update that the group has been merged
 
