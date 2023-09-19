@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import typing
 from collections import namedtuple
+from pathlib import Path
 
 ChapterInfo = namedtuple("ChapterInfo", ["name", "path", "time_start", "time_end", "duration"])
 
@@ -36,18 +37,19 @@ def write_chapters(filename: str, chapters: typing.List[ChapterInfo]) -> None:
         filename (str): Path to file
         chapters (typing.List[ChapterInfo]): List of chapters on format [(name, path, time_start, time_end, duration), ...]
     """
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="UTF-8") as f:
         for i, c in enumerate(chapters):
             timestamp = f"{int(c.time_start.seconds/3600):02}:{int(c.time_start.seconds/60)%60:02}:{int(c.time_start.seconds)%60:02}"
             f.write(f"{timestamp} - {c.name}\n")
 
 
-def save_flist(videos: typing.List[str]) -> None:
-    """Transforms a list of videos into a text file of videos on FFMPEG format
+def save_flist(video_paths: typing.List[Path]) -> None:
+    """Transforms a list of video_paths into a text file of videos on FFMPEG format
 
     Args:
-        videos (typing.List[str]): List of videos on format [video1, video2, ...]
+        video_paths (typing.List[Path]): List of video_paths on format [Path(video1), Path(video2), ...]
     """
+    videos = [p.name for p in video_paths]
     f_data = "file '" + "'\nfile '".join(videos) + "'"
 
     f_list = "temp/list.txt"
@@ -84,18 +86,20 @@ def merge_videos(
 
     encoder = "h264_nvenc" if gpu else "libx264"
 
-    processed_file_path = "temp/processed_videos.txt"
+    temp_path = Path("temp")
+    processed_file_path = temp_path / "processed_videos.txt"
     processed = set()
-    if os.path.exists(processed_file_path):
-        with open(processed_file_path, "r", encoding="UTF-8") as f:
+    if processed_file_path.exists():
+        with processed_file_path.open(encoding="UTF-8") as f:
             processed = set(f.read().splitlines())
 
     # check if any videos have been processed
     video_paths = [c.path for c in chapters]
     if not any(p in processed for p in video_paths):
         # remove and create new temp_videos folder if no videos have been processed
-        shutil.rmtree("temp", ignore_errors=True)
-        os.mkdir("temp")
+        if temp_path.exists():
+            shutil.rmtree(temp_path)
+        temp_path.mkdir()
 
     # setup list of videos for merge
     processed_videos = []
@@ -103,7 +107,7 @@ def merge_videos(
     # iterate over group (videos)
     for idx, c in enumerate(chapters):
         # set output video path
-        out_video_path = f"temp\{c.name[:-4]}.mp4"
+        out_video_path = temp_path / f"{c.name[:-4]}.mp4"
 
         # check if video has been processed
         if c.path in processed:
@@ -116,13 +120,13 @@ def merge_videos(
                 f'ffmpeg -y -i "{c.path}" -max_interleave_delta 0 -vf "scale=-1:720" -c:v {encoder} -b:v 250k -r 15 "{out_video_path}"',
                 verbose,
             )
-            with open(processed_file_path, "a", encoding="UTF-8") as f:
-                f.write(c.path + "\n")
+            with processed_file_path.open("a", encoding="UTF-8") as f:
+                f.write(f"{c.path}\n")
 
-        processed_videos.append(out_video_path[5:])
+        processed_videos.append(out_video_path)
 
-    # combine videos into final merged videofile
-    save_flist(processed_videos)
+        # combine videos into final merged videofile
+        save_flist(processed_videos)
 
     # only support the same video_format, copy and not recode.
     run_command(f'ffmpeg -f concat -safe 0 -i temp\\list.txt -c copy "{merged_filename}" -y', verbose)
