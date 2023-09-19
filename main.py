@@ -64,7 +64,11 @@ def run_command(command: str, verbose: bool) -> None:
 
 
 def merge_videos(
-    merged_filename: str, chapters: typing.List[ChapterInfo], verbose: bool = False, gpu: bool = True
+    output_folder: str,
+    merged_filename: str,
+    chapters: typing.List[ChapterInfo],
+    verbose: bool = False,
+    gpu: bool = True,
 ) -> None:
     """Merge videos from chapters list to merged_filename.
 
@@ -77,12 +81,19 @@ def merge_videos(
         3. Combine videos into final merged videofile
 
     Args:
+        output_folder (str): Path to output folder
         merged_filename (str): Path to merged video
         chapters (typing.List[ChapterInfo]): List of chapters on format [(name, path, time_start, time_end, duration), ...]
         verbose (bool, optional): Verbose ffmpeg. Defaults to False.
         gpu (bool, optional): Use GPU for encoding. Defaults to True.
     """
-    # TODO get merged status (not set in mergerdata)
+    # check if videos are already merged
+    merge_check = Path(output_folder) / "merged.txt"
+    if merge_check.exists():
+        merged_videos = merge_check.read_text(encoding="UTF-8").splitlines()
+        if merged_filename in merged_videos:
+            print(f"Skipping '{merged_filename}', already merged")
+            return
 
     encoder = "h264_nvenc" if gpu else "libx264"
 
@@ -131,7 +142,9 @@ def merge_videos(
     # only support the same video_format, copy and not recode.
     run_command(f'ffmpeg -f concat -safe 0 -i temp\\list.txt -c copy "{merged_filename}" -y', verbose)
 
-    # TODO update that the group has been merged
+    # update that the group has been merged
+    with merge_check.open("a", encoding="UTF-8") as f:
+        f.write(f"{merged_filename}\n")
 
 
 def extract_numbers(string: str) -> tuple[int, str]:
@@ -149,7 +162,9 @@ def extract_numbers(string: str) -> tuple[int, str]:
     return tuple(map(int, numbers)) + (string,)
 
 
-def process_folder(folder: Path, time_limit: datetime.timedelta, verbose: bool, gpu: bool) -> None:
+def process_folder(
+    output_folder: str, folder: Path, time_limit: datetime.timedelta, verbose: bool, gpu: bool
+) -> None:
     """Process a single folder and merge its videos."""
     folder_name = folder.name
     print(f"Folder: {folder_name}")
@@ -172,8 +187,8 @@ def process_folder(folder: Path, time_limit: datetime.timedelta, verbose: bool, 
 
         # If the total duration exceeds the limit, merge the videos
         if time_counter + duration > time_limit:
-            output_name = f"output/{folder_name}-{merged_videos}"
-            merge_and_write_chapters(output_name, chapters, verbose, gpu)
+            output_name = f"{output_folder}/{folder_name}-{merged_videos}"
+            merge_and_write_chapters(output_folder, output_name, chapters, verbose, gpu)
 
             # Reset chapters and time_counter
             chapters.clear()
@@ -187,31 +202,38 @@ def process_folder(folder: Path, time_limit: datetime.timedelta, verbose: bool, 
 
     # Merge remaining videos
     if chapters:
-        output_name = f"output/{folder_name}-{merged_videos}"
-        merge_and_write_chapters(output_name, chapters, verbose, gpu)
+        output_name = f"{output_folder}/{folder_name}-{merged_videos}"
+        merge_and_write_chapters(output_folder, output_name, chapters, verbose, gpu)
 
 
 def merge_and_write_chapters(
-    output_name: str, chapters: typing.List[ChapterInfo], verbose: bool, gpu: bool
+    output_folder: str, output_name: str, chapters: typing.List[ChapterInfo], verbose: bool, gpu: bool
 ) -> None:
     """Helper function to merge videos and write chapters."""
-    merge_videos(f"{output_name}.mp4", chapters, verbose=verbose, gpu=gpu)
+    merge_videos(output_folder, f"{output_name}.mp4", chapters, verbose=verbose, gpu=gpu)
     write_chapters(f"{output_name}.txt", chapters)
 
 
-def main(root_dir: str, time_limit_hours: int = 12, verbose_ffmpeg: bool = False, gpu: bool = True):
+def main(
+    root_dir: str,
+    output_folder: str,
+    time_limit_hours: int = 12,
+    verbose_ffmpeg: bool = False,
+    gpu: bool = True,
+):
     """Main function.
 
     For each folder in root_dir, merge all videos in the folder to a single video. The merged videos will be saved in the output folder.
 
     Args:
         root_dir (str): Path to root directory
+        output_folder (str): Path to output folder
         time_limit_hours (int, optional): Time limit for each merged video in hours. Defaults to 12.
         verbose_ffmpeg (bool, optional): Verbose ffmpeg. Defaults to False.
         gpu (bool, optional): Use GPU for encoding. Defaults to True.
     """
     # Create output directory
-    output_path = Path("output")
+    output_path = Path(output_folder)
     output_path.mkdir(exist_ok=True)
 
     time_limit = datetime.timedelta(hours=time_limit_hours)
@@ -219,12 +241,13 @@ def main(root_dir: str, time_limit_hours: int = 12, verbose_ffmpeg: bool = False
     # Process each folder
     for folder in Path(root_dir).iterdir():
         if folder.is_dir():
-            process_folder(folder, time_limit, verbose_ffmpeg, gpu)
+            process_folder(output_folder, folder, time_limit, verbose_ffmpeg, gpu)
 
 
 if __name__ == "__main__":
     main(
         "C:\Channels",
+        "output",
         time_limit_hours=12,
         verbose_ffmpeg=True,
         gpu=True,
