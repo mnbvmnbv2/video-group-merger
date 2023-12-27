@@ -135,7 +135,7 @@ def merge_videos(
 
             # process video
             run_command(
-                f'ffmpeg -y -i "{c.path}" -max_interleave_delta 0 -vf "scale=-1:720" -c:v {encoder} -b:v 250k -r 15 "{out_video_path}"',
+                f'ffmpeg -y -i "{c.path}" -max_interleave_delta 0 -c:v {encoder} -b:v 250k -r 15 "{out_video_path}"',  # -vf "scale=-1:720"
                 verbose,
             )
             with processed_file_path.open("a", encoding="UTF-8") as f:
@@ -154,17 +154,21 @@ def merge_videos(
         f.write(f"{merged_filename}\n")
 
 
-def extract_numbers(string: str) -> tuple[int, str]:
+def extract_numbers(string: str, fill_value: int = 0, max_length: int = 5) -> tuple[int, str]:
     """Extract numbers from string. Used for sorting.
 
     Args:
         string (str): String
+        fill_value (int, optional): Fill value. Defaults to 0.
+        max_length (int, optional): Max length of extracted numbers. Defaults to 5.
 
     Returns:
         tuple: Tuple of integers and string
     """
-    # Extract all numbers
-    numbers = re.findall(r"\d+", string)
+    # Extract all numbers and convert them to integers
+    numbers = [int(num) for num in re.findall(r"\d+", string)]
+    # If the number of extracted numbers is less than max_length, fill in the rest
+    numbers += [fill_value] * (max_length - len(numbers))
     # Convert to integers, and append the original string for textual comparison
     return tuple(map(int, numbers)) + (string,)
 
