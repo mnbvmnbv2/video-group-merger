@@ -2,7 +2,15 @@
 
 A collection of scripts for compression, merging and uploading of videos to youtube.
 
-This is made for groups of videoes (course-videos etc.) that might need to be setup a specific way.
+This is made for groups of videoes (course-videos etc.) that will be combined to reduce the 
+total amount of files to make it easier to upload to youtube.
+
+This repo has been experimental for a long time and the structure of the files have changed multiple times. 
+Using what I have learned I have found that the current setup with one main file to compress, merge videos 
+and add a summary text-file for chapters, to be most practical. 
+
+## Table of contents
+- [Features](Features)
 
 **Currently the scrips are split into:**
 
@@ -73,6 +81,23 @@ should include:
 - FFMPEG
 - Exiftool
 - hachoir (no more)
+
+## Lessions Learned (most important?)
+- This started as my first project where I used python to modify files on my system, as well as the first time I did that in any automed fashion.
+- I have learned to work with many libraries I have never used before as:
+    - subprocesses
+    - regex
+    - datetime
+    ...
+- Encountered some basics of working with videos (encoding/decoding, audio track vs video track etc.)
+- Working with real world "messy" videos are super challenging
+- Most of my time after inital setup was to either make stuff more efficient or locate bugs of corruping videos
+- Worked with different video formats
+- Worked with exiftool (learned about metadata on videos and other files) and FFMPEG
+- Learned a lot about making backwards compatible code, making backup and "fail-safeing"/error handling
+- Handling slightly big amounts of data (just on a laptop) 500-1000GB
+- Learned about some data analysis on my "dataset" of metadata about videos.
+- Google/youtube API, and API in general
 
 ## Statistics
 
