@@ -123,7 +123,3 @@ This is outdated, but not too far off.
 Ran compression on about 3100 videos of ~560GB. Compressed to ~160GB in about 15 days (24 hours a day) on a 4
 core CPU (1.5-4.5 GHz) laptop.
 Compressing on a Nvidia 3070 laptop GPU was about 4-8 times faster.
-
-
-TODO:
-Everything should be f-string, all "/" should be either `/` or `\\\\`, and open should use enconding.
