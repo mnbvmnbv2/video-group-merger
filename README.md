@@ -1,4 +1,4 @@
-# YoutubeUploader
+# video-group-merger
 
 This repo contains two scripts:
 - One for merging videos and writing metadata
@@ -6,13 +6,15 @@ This repo contains two scripts:
 
 This project is primarily for learning purposes and is should not be viewed as robust or efficient.
 
-The main script is the merging script as youtube has restrictions on number of daily uploads, but not on size.
-The idea was therefore to merge videos up to the limit of 12 hours and write chapter data such that one can 
-upload more videos in a shorter amount of time.
+The aim is to merge videos before uploading to youtube as youtube has restrictions on number of daily uploads,
+but little restriction on size. The idea is therefore to merge videos up to the limit of 12 hours and use
+video chapters to separate videos such that one can upload more videos in a shorter amount of time.
+The main script is designed for groups of many smaller videos (e.g. lectures) to be combined and numerated.
 
-Using the youtube API was limiting both in number of uploads (4 instead of 10 per day, and you steed need to
-authenticate per video) so I would suggest to just use `main.py` to merge the videos and manually upload them 
-and paste the chapter data. 
+I tried combining it wwith the youtube API, but it was limiting both in number of uploads and authentication
+(4 instead of 10 per day with manual upload, and you steed need to authenticate per video anyway).
+I would suggest to just use `main.py` to merge the videos and manually upload them to youtube and then paste
+the chapter data. 
 
 This repo has been experimental for a long time and there are potentially multiple places where the 
 documentation is outdated.
@@ -25,9 +27,16 @@ documentation is outdated.
 
 ## Main script
 - This uses ffmprobe to find video sizes
-- Compresses and merges videos into chunks of up to 12 hours and outputs a file with
+- Compresses and merges videos into chunks of up to 12 hours.
 
-- You need to specify input folder and output folder:
+- You need to specify input folder and output folder
+- THe input folder should be divided by folders per "related group" for example courses if you use it for
+lecture videos. The combined length inside a folder can exceed 12 hours. If one folder named `example` has
+14 videos that are a combined length of 14 hours, then the output videos will be named `example-1.mp4` and 
+`example-2.mp4`.
+- It is generated a textfile alongside the video with timestamps for the original videos. This can be pasted
+as the youtube description of the merged video to make it easy to find the orignial videos.
+
 - Input folder should be on format
 ```
 - Input_folder
@@ -41,37 +50,45 @@ documentation is outdated.
 - The output should be the following:
 ```
 - Output_folder
+    - Group1-1.mp4
+    - Group1-1.txt
+    - Group1-2-mp4
+    - Group1-2.txt
+    - Group2-1.mp4
+    - Group2-1.txt
+    - ...
 ```
-- As I have encountered a lot of errors I have put in some error handling, but if you use this script there
-might be cases that I have not encountered.
+- I have added support for merging (encoding/decoding) with nvidia GPUs which should be faster.
+- If the script is stopped mid-way, there are some temp_files and logs saved so that should be able to 
+continue from where it was stopped, however it might not be "fail-safe".
 
-## Known things to watch out for
-- Soring of videos is handeled by numbers then text, however if there are different amount of numbers it is
-zero padded up to 5 numbers (can be changed manually)
-- If videos are of different aspect ratio, or fps there might be trouble. In the latest version this should
-be handeled to some degree, but it might not be fail-safe.
-- Be mindful of video names, the script should handle spaces etc., but there might be special characters that
-makes it crash
-- To handle differing video types (size etc.), I believe one has to decode and encode the videos which is slow
-, therefore it is possible to use GPU for this, which you should check out if you have available.
-- If the script is stopped mid-way, there are some temp_files and logs saved so that one does not have to
-process all files again, however it might not be "fail-safe".
+### Known things to watch out for
+- As I have encountered a lot of errors I have put in some error handling, but there are probably plenty more
+edge cases that could cause errors. Some things to consider are the following:
+- The merged videos tries to sort the order by numbers appearing in the name however if there are more than
+5 numbers appearing with separation you need to change the `extract_numbers` function argument `max_length`.
+- If videos are of different aspect ratio, or fps there might be trouble. In the latest version of the script
+this should be handeled to some degree, but it might not be fail-safe.
+- Be mindful of video names, the script should handle spaces and some other special characters, but there 
+might be some characters that makes the script crash
 
-### upload
+## youtube-uploader
 - Supports chunked upload
 - You need to setup youtube api credentials: https://console.cloud.google.com/apis/credentials
 - Both OAuth and API keys need to be placed in /Keys folder
 - You must enable YouTube Data API v3 in the API project you create
 
+## Tools used
 **Libraries**
-- os
-- glob
 - subprocesses
-- pandas
 - shutil
-- time
-- moviepy
+- argparse
+- os (removed)
+- glob (removed)
+- pandas (removed)
+- moviepy (removed)
 - regex (removed)
+- time (removed)
 - datetime (removed)
 - numpy (removed)
 - concurrent.futures (removed)
@@ -80,31 +97,24 @@ process all files again, however it might not be "fail-safe".
 - youtube api
 
 **Programs**
-- FFMPEG
+- FFMPEG + FMMPROBE
 - Exiftool (no more)
 - hachoir (no more)
 
 ## Lessions Learned (most important?)
 - This project has been super educative and I would advise you to try to make something similar if you want
-to learn about working with videos or creating a mid-sizes project.
-- This started as my first project where I used python to modify files on my system, as well as the first time
-I did that with automation.
-- I have learned to work with many libraries I have never used before such as:
-    - subprocesses
-    - regex
-    - datetime
-    - FFMPEG
-    - exiftool
-    ...
-- Encountered some basics of working with videos:
+to learn about working with videos or creating a mid-sized project.
+- This started as my first project where I used python to modify files on my system.
+- I have learned to work with many libraries I have never used before (see Libraries list).
+- I encountered some basics of working with videos:
     - encoding/decoding, audio track vs video track, videotypes, aspect ratios, sizes, bitsize +++
 - Working with real world "messy" videos are super challenging, there are so many bugs one can encounter
 - Most of the time after the inital setup was used to either make stuff more efficient or fix bugs
-- Worked with exiftool (learned about metadata on videos and other files) and FFMPEG
-- Learned a lot about making backwards compatible code, making backup and "fail-safeing"/error handling
-- Handling decent amounts of data on a laptop without outside backup (500-1000GB)
-- Learned about some data analysis on my "dataset" of metadata about videos.
-- Google/youtube API, and API in general
+- Worked with exiftool (learned about metadata on videos and other files) and created some datasets and
+visualisations with the data I had (separately)
+- Learned a lot about making backwards compatible code, making backup and "fail-safeing"/error handling as
+I worked with decent amounts of data on a laptop without outside backup (500-1000GB)
+- Learned about the Google/youtube API, and APIs in general
 
 ## Statistics
 This is outdated, but not too far off.
@@ -112,7 +122,7 @@ This is outdated, but not too far off.
 #### Compression
 Ran compression on about 3100 videos of ~560GB. Compressed to ~160GB in about 15 days (24 hours a day) on a 4
 core CPU (1.5-4.5 GHz) laptop.
-Compressing on a Nvidia 3070 laptop GPU was about 4-8 times faster.  
+Compressing on a Nvidia 3070 laptop GPU was about 4-8 times faster.
 
 
 TODO:
