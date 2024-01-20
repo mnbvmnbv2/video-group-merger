@@ -4,7 +4,6 @@ import json
 import re
 import shutil
 import subprocess
-import typing
 from collections import namedtuple
 from pathlib import Path
 
@@ -29,12 +28,12 @@ def get_duration(filename: str) -> datetime.timedelta:
     return datetime.timedelta(seconds=duration)
 
 
-def write_chapters(filename: str, chapters: typing.List[ChapterInfo]) -> None:
+def write_chapters(filename: str, chapters: list[ChapterInfo]) -> None:
     """Write chapters to a text file
 
     Args:
         filename (str): Path to file
-        chapters (typing.List[ChapterInfo]): List of chapters on format [(name, path, time_start, time_end, duration), ...]
+        chapters (list[ChapterInfo]): List of chapters on format [(name, path, time_start, time_end, duration), ...]
     """
     with open(filename, "w", encoding="UTF-8") as f:
         for i, c in enumerate(chapters):
@@ -42,11 +41,11 @@ def write_chapters(filename: str, chapters: typing.List[ChapterInfo]) -> None:
             f.write(f"{timestamp} - {c.name}\n")
 
 
-def save_flist(video_paths: typing.List[Path]) -> None:
+def save_flist(video_paths: list[Path]) -> None:
     """Transforms a list of video_paths into a text file of videos on FFMPEG format
 
     Args:
-        video_paths (typing.List[Path]): List of video_paths on format [Path(video1), Path(video2), ...]
+        video_paths (list[Path]): List of video_paths on format [Path(video1), Path(video2), ...]
     """
     videos = [p.name for p in video_paths]
     f_data = "file '" + "'\nfile '".join(videos) + "'"
@@ -73,7 +72,7 @@ def run_command(command: str, verbose: bool) -> None:
 def merge_videos(
     output_folder: str,
     merged_filename: str,
-    chapters: typing.List[ChapterInfo],
+    chapters: list[ChapterInfo],
     verbose: bool = False,
     gpu: bool = True,
 ) -> None:
@@ -90,7 +89,7 @@ def merge_videos(
     Args:
         output_folder (str): Path to output folder
         merged_filename (str): Path to merged video
-        chapters (typing.List[ChapterInfo]): List of chapters on format [(name, path, time_start, time_end, duration), ...]
+        chapters (list[ChapterInfo]): List of chapters on format [(name, path, time_start, time_end, duration), ...]
         verbose (bool, optional): Verbose ffmpeg. Defaults to False.
         gpu (bool, optional): Use GPU for encoding. Defaults to True.
     """
@@ -218,7 +217,7 @@ def process_folder(
 
 
 def merge_and_write_chapters(
-    output_folder: str, output_name: str, chapters: typing.List[ChapterInfo], verbose: bool, gpu: bool
+    output_folder: str, output_name: str, chapters: list[ChapterInfo], verbose: bool, gpu: bool
 ) -> None:
     """Helper function to merge videos and write chapters."""
     merge_videos(output_folder, f"{output_name}.mp4", chapters, verbose=verbose, gpu=gpu)
