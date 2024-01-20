@@ -1,8 +1,11 @@
 # video-group-merger
 
-This repo contains two scripts:
-- One for merging videos and writing metadata
-- One for uploading to youtube
+Youtube uploading script is moved to [youtube-uploader](https://github.com/mnbvmnbv2/youtube-uploader), but 
+it is not that useful.
+
+---
+
+This repo now only contains one script for merging videos and writing metadata.
 
 This project is primarily for learning purposes and is should not be viewed as robust or efficient.
 
@@ -11,10 +14,7 @@ but little restriction on size. The idea is therefore to merge videos up to the 
 video chapters to separate videos such that one can upload more videos in a shorter amount of time.
 The main script is designed for groups of many smaller videos (e.g. lectures) to be combined and numerated.
 
-I tried combining it wwith the youtube API, but it was limiting both in number of uploads and authentication
-(4 instead of 10 per day with manual upload, and you steed need to authenticate per video anyway).
-I would suggest to just use `main.py` to merge the videos and manually upload them to youtube and then paste
-the chapter data. 
+Use `main.py` to merge the videos and manually upload them to youtube and then paste the chapter data. 
 
 This repo has been experimental for a long time and there are potentially multiple places where the 
 documentation is outdated.
@@ -30,7 +30,7 @@ documentation is outdated.
 - Compresses and merges videos into chunks of up to 12 hours.
 
 - You need to specify input folder and output folder
-- THe input folder should be divided by folders per "related group" for example courses if you use it for
+- The input folder should be divided by folders per "related group" for example courses if you use it for
 lecture videos. The combined length inside a folder can exceed 12 hours. If one folder named `example` has
 14 videos that are a combined length of 14 hours, then the output videos will be named `example-1.mp4` and 
 `example-2.mp4`.
@@ -72,12 +72,6 @@ this should be handeled to some degree, but it might not be fail-safe.
 - Be mindful of video names, the script should handle spaces and some other special characters, but there 
 might be some characters that makes the script crash
 
-## youtube-uploader
-- Supports chunked upload
-- You need to setup youtube api credentials: https://console.cloud.google.com/apis/credentials
-- Both OAuth and API keys need to be placed in /Keys folder
-- You must enable YouTube Data API v3 in the API project you create
-
 ## Tools used
 **Libraries**
 - subprocesses
@@ -93,8 +87,6 @@ might be some characters that makes the script crash
 - numpy (removed)
 - concurrent.futures (removed)
 - json (removed)
-
-- youtube api
 
 **Programs**
 - FFMPEG + FMMPROBE
